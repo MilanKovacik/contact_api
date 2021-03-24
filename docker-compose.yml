@@ -1,0 +1,54 @@
+version: "3"
+services:
+  postgreSQL:
+    image: postgres:11
+    container_name: postgreSQL
+    restart: unless-stopped
+    volumes:
+      - ./dbInit:/docker-entrypoint-initdb.d/
+      - ./pgdata:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=Xasdf54asd
+      - POSTGRES_USER=admin
+      - POSTGRES_DB=contacts
+    networks:
+      - postgres-compose-network
+
+  contacts:
+    image: contacts:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+    depends_on:
+      - postgreSQL
+    links:
+      - postgreSQL
+    networks:
+      - postgres-compose-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+    volumes:
+      - pgadmin:/root/.pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json
+    ports:
+      - 16543:80
+    networks:
+      - postgres-compose-network
+    restart: unless-stopped
+
+networks:
+  postgres-compose-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  pgadmin:
